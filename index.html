@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Order T-Shirt Shop</title>
+    <style>
+        :root { --primary: #111; --accent: #ff4757; --bg: #f8f9fa; }
+        body { font-family: 'Prompt', sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: #333; }
+        header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .product-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding-bottom: 20px; }
+        .product-img { width: 100%; height: 250px; background: #e9ecef; display: flex; align-items: center; justify-content: center; color: #aaa; }
+        .badge { background: var(--accent); color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; display: inline-block; margin-top: 15px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; overflow-y: auto; }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; position: relative; margin: 20px auto; }
+        .qr-placeholder { width: 200px; height: 200px; background: #ddd; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .loading { display: none; color: #ff4757; font-weight: bold; margin-top: 10px; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <h1>PRE-ORDER EXCLUSIVE SHOP</h1>
+        <p>ระบบสั่งซื้อเชื่อมต่อ Google Sheets หลังบ้านอัตโนมัติ</p>
+    </header>
+
+    <div class="container">
+        <div class="product-grid">
+            <div class="product-card">
+                <div class="product-img">[ รูปภาพเสื้อยืดพรีออเดอร์ ]</div>
+                <span class="badge">Pre-Order</span>
+                <h3>Limited Edition Street T-Shirt</h3>
+                <p style="color: var(--accent); font-weight: bold;">450 บาท</p>
+                <button class="btn" onclick="openOrderModal('Limited Edition Street T-Shirt', 450)">สั่งซื้อพรีออเดอร์</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">ฟอร์มสั่งซื้อสินค้า</h2>
+            
+            <form id="preOrderForm" onsubmit="submitOrder(event)">
+                <input type="text" id="cusName" placeholder="ชื่อ-นามสกุล ผู้รับ" required>
+                <input type="tel" id="cusPhone" placeholder="เบอร์โทรศัพท์" required>
+                <select id="shirtSize" required>
+                    <option value="">เลือกไซส์เสื้อ</option>
+                    <option value="S">S (รอบอก 36")</option>
+                    <option value="M">M (รอบอก 40")</option>
+                    <option value="L">L (รอบอก 44")</option>
+                    <option value="XL">XL (รอบอก 48")</option>
+                    <option value="2XL">2XL (รอบอก 52")</option>
+                    <option value="3XL">3XL (รอบอก 56")</option>
+                    <option value="4XL">4XL (รอบอก 60")</option>
+                    <option value="5XL">5XL (รอบอก 64")</option>
+                </select>
+                <input type="text" id="cusAddress" placeholder="ที่อยู่จัดส่งอย่างละเอียด" required>
+                
+                <hr style="border: 0.5px solid #eee; margin: 20px 0;">
+                
+                <h3>ช่องทางการชำระเงิน</h3>
+                <p>ยอดเงินที่ต้องชำระ: <span id="totalPrice" style="color:var(--accent); font-weight:bold;"></span> บาท</p>
+                
+                <div style="background-color: #f1f3f5; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; border-left: 5px solid #0056b3;">
+                 <p style="margin: 5px 0; font-weight: bold; color: #1a1a1a; font-size: 16px;">🏦 ช่องทางการชำระเงิน</p>
+                 <p style="margin: 5px 0; color: #444;"><strong>ธนาคาร:</strong> กสิกรไทย (KBank)</p>
+                 <p style="margin: 5px 0; color: #444;"><strong>เลขที่บัญชี:</strong> 135-2-81138-2</p>
+                 <p style="margin: 5px 0; color: #444;"><strong>ชื่อบัญชี:</strong> ณรงค์พัฒน์ เพิกขุนทด</p>
+                </div>
+                
+                <p style="font-size: 12px; color: #ff4757;">* กรุณาแนบสลิปเพื่อยืนยันออเดอร์</p>
+                <input type="file" id="slipFile" accept="image/*" required>
+                
+                <div class="loading" id="loadingText">กำลังส่งข้อมูลและอัปโหลดสลิป กรุณารอสักครู่...</div>
+                <button type="submit" id="submitBtn" class="btn" style="background: #2ed573; width: 100%; margin-top: 15px;">ส่งข้อมูลการพรีออเดอร์</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ เชื่อมต่อหลังบ้าน: นำ URL ของ Apps Script ที่ได้จากขั้นตอนที่ 2 มาวางแทนข้อความในเครื่องหมายคำพูดด้านล่างนี้
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk1oX_7yzPwu7CWThrw0-vzgGX54G89WEHzBTz0GjXPpkM5sfXyJdYNKWJdwIBqWBxDA/exec"; 
+        
+        let currentProductName = "";
+        let currentProductPrice = 0;
+
+        function openOrderModal(name, price) {
+            document.getElementById('orderModal').style.display = 'flex';
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('totalPrice').innerText = price;
+            currentProductName = name;
+            currentProductPrice = price;
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        function submitOrder(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingText = document.getElementById('loadingText');
+            
+            // ล็อกปุ่มกดป้องกันลูกค้ากดซ้ำระหว่างส่งข้อมูล
+            submitBtn.disabled = true;
+            loadingText.style.display = 'block';
+
+            const fileInput = document.getElementById('slipFile');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            // ทำการแปลงไฟล์รูปสลิปเป็นรหัสข้อความ (Base64) เพื่อส่งเข้า Google Drive
+            reader.onloadend = function() {
+                const orderData = {
+                    name: document.getElementById('cusName').value,
+                    phone: document.getElementById('cusPhone').value,
+                    size: document.getElementById('shirtSize').value,
+                    address: document.getElementById('cusAddress').value,
+                    product: currentProductName,
+                    price: currentProductPrice,
+                    slipBase64: reader.result,
+                    slipName: file.name
+                };
+
+                // ส่งข้อมูลออกไปยังหลังบ้าน Google Apps Script ด้วยคำสั่ง Fetch
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                })
+                .then(() => {
+                    alert('ส่งข้อมูลการพรีออเดอร์เรียบร้อยแล้ว! ข้อมูลจะถูกบันทึกเข้า Google Sheets ของร้านทันที');
+                    closeModal();
+                    document.getElementById('preOrderForm').reset();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง');
+                })
+                .finally(() => {
+                    // คืนค่าปุ่มให้กลับมาใช้งานได้ปกติหลังจากทำงานเสร็จ
+                    submitBtn.disabled = false;
+                    loadingText.style.display = 'none';
+                });
+            };
+
+            if (file) {
+                reader.readAsDataURL(file);
+            } else {
+                alert('กรุณาแนบไฟล์สลิปชำระเงินก่อนส่งข้อมูล');
+                submitBtn.disabled = false;
+                loadingText.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
